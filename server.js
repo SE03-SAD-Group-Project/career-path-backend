@@ -2,51 +2,40 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const helmet = require("helmet");
-const mongoSanitize = require("express-mongo-sanitize");
+const helmet = require("helmet"); // OK to keep
+// const mongoSanitize = require("express-mongo-sanitize");  // removed
 const rateLimit = require("express-rate-limit");
-const cookieParser = require("cookie-parser");
 
-// Load environment variables
 dotenv.config();
 
-const app = express();   // ✅ THIS MUST COME FIRST
+// 🟢 MUST COME BEFORE ANY app.use()
+const app = express();
 
-// ---------- Security Middlewares ----------
+// Middlewares
 app.use(helmet());
-app.use(mongoSanitize());
-app.use(cookieParser());
+app.use(express.json());
+app.use(cors());
 
-// Rate limiter (protects login + register)
+// Rate limit (optional)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
 });
 app.use(limiter);
 
-// ---------- Body Parsing ----------
-app.use(express.json());
-
-// ---------- CORS ----------
-app.use(
-  cors({
-    origin: "*",        // You can change this to your frontend URL for more security
-    credentials: true,
-  })
-);
-
-// ---------- Routes ----------
+// Routes
 const userRoutes = require("./routes/userRoutes");
-app.use("/api/users", userRoutes);
+const careerRoutes = require("./routes/careerRoutes");
 
-// ---------- MongoDB Connection ----------
+app.use("/api/users", userRoutes);
+app.use("/api/careers", careerRoutes);   // 🟢 MUST COME HERE (AFTER app = express())
+
+// MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch((err) => console.error("❌ MongoDB Connection Error:", err));
+  .then(() => console.log("MongoDB Connected yoooo"))
+  .catch((err) => console.error("MongoDB Connection Error:", err));
 
-// ---------- Start Server ----------
+// Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
