@@ -1,30 +1,18 @@
-// backend/scripts/auto_embed_careers_deepinfra.js
-require('dotenv').config();
 const mongoose = require('mongoose');
 const Career = require('../models/career');
-const { embedText } = require('../services/deepinfra_embeddings'); // service from step1
+const { embedText } = require('../services/deepinfra_embeddings');
+require('dotenv').config();
 
-async function main() {
+async function run(){
   await mongoose.connect(process.env.MONGO_URI);
-  console.log("Connected");
-  const careers = await Career.find().lean();
-  console.log("Found", careers.length);
-  for (const c of careers) {
-    const text = `${c.title}. ${c.description}. ${ (c.requiredSkills||[]).join(", ") }`;
-    try {
-      const emb = await embedText(text);
-      if (emb && emb.length) {
-        await Career.updateOne({ _id: c._id }, { $set: { embedding: emb } });
-        console.log("Embedded", c.title);
-      } else {
-        console.warn("No embedding for", c.title);
-      }
-    } catch (e) {
-      console.error("Error embedding", c.title, e.message || e);
-    }
+  const items = await Career.find().lean();
+  console.log("Found", items.length);
+  for(const i of items){
+    const text = `${i.title}. ${i.description}. ${(i.requiredSkills||[]).join(", ")}`;
+    const emb = await embedText(text);
+    if(emb) await Career.updateOne({ _id: i._id }, { $set: { embedding: emb }});
+    console.log("Embedded", i.title);
   }
-  console.log("All done");
-  process.exit(0);
+  console.log("All done"); process.exit(0);
 }
-
-main().catch(e=>{ console.error(e); process.exit(1); });
+run();

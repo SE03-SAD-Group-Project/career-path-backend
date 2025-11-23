@@ -7,25 +7,22 @@ router.get('/skills', async (req,res)=>{
   const q = (req.query.q||"").toLowerCase().trim();
   if(!q) return res.json({ok:true, suggestions:[]});
 
-  // collect skill pool
   const careers = await Career.find().lean();
   const pool = new Set();
-  for(const c of careers){
-    (c.requiredSkills||[]).forEach(s => pool.add(s));
-  }
+  for(const c of careers) (c.requiredSkills||[]).forEach(s=>pool.add(s));
+
   const arr = Array.from(pool);
   const substringMatches = arr.filter(s=> s.toLowerCase().includes(q)).slice(0,10);
   if(substringMatches.length >= 6) return res.json({ ok:true, suggestions: substringMatches });
 
-  // fallback: embedding similarity to top skills
   try {
     const userEmb = await embedText(q);
+    if(!userEmb) return res.json({ ok:true, suggestions: substringMatches });
     const scored = [];
     for(const s of arr){
       const se = await embedText(s);
       if(!se) continue;
-      // cosine:
-      let dot = 0, na=0, nb=0;
+      let dot=0, na=0, nb=0;
       for(let i=0;i<userEmb.length;i++){ dot += (userEmb[i]||0)*(se[i]||0); na += (userEmb[i]||0)*(userEmb[i]||0); nb += (se[i]||0)*(se[i]||0); }
       const cos = dot/(Math.sqrt(na)*Math.sqrt(nb)||1);
       scored.push({ s, cos });

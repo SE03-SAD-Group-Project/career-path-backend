@@ -21,23 +21,19 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Home route
+// HOME ROUTE
 app.get("/", (req, res) => {
   res.send({ ok: true, message: "Career Path API Running" });
 });
 
-// Working routes
+/* ------------ VALID ROUTES ONLY — CLEAN, NO DUPLICATES ------------ */
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/careers", require("./routes/careerRoutes"));
 app.use("/api", require("./routes/recommendOnlineRoute.js"));
+app.use("/api/admin", require("./routes/adminRoutes.js"));
+/* ------------------------------------------------------------------- */
 
-// ❌ REMOVE ALL NON-EXISTING ROUTES
- app.use("/api", require("./routes/recommendRoute"));
- //app.use("/api/post", require("./routes/postRoutes"));
- app.use("/api", require("./routes/suggestRoutes"));
- app.use("/api/admin", require("./routes/adminRoutes"));
-
-// Database
+// DATABASE
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected yoooo"))
