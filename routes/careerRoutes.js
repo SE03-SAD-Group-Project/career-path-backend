@@ -1,75 +1,44 @@
 const express = require("express");
 const router = express.Router();
+const Career = require("../models/career");
 
-// Temporary in-code career database
-const careerDatabase = [
-  {
-    career: "Software Engineer",
-    skills: ["programming", "problem solving", "logic"],
-    interests: ["technology", "coding"],
-    workStyle: "analytical"
-  },
-  {
-    career: "Graphic Designer",
-    skills: ["creativity", "design", "art"],
-    interests: ["drawing", "visuals"],
-    workStyle: "creative"
-  },
-  {
-    career: "Business Analyst",
-    skills: ["communication", "analysis", "documentation"],
-    interests: ["business", "strategy"],
-    workStyle: "analytical"
-  },
-  {
-    career: "Nurse",
-    skills: ["empathy", "caregiving"],
-    interests: ["helping people"],
-    workStyle: "social"
-  }
-];
-
-// POST /recommend logic
-router.post("/recommend", async (req, res) => {
+// GET all careers
+router.get("/", async (req, res) => {
   try {
-    const { skills, interests, workStyle } = req.body;
+    const rows = await Career.find().lean();
+    res.json({ ok: true, careers: rows });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
 
-    let bestCareer = null;
-    let bestScore = 0;
+// CREATE career
+router.post("/", async (req, res) => {
+  try {
+    const c = await Career.create(req.body);
+    res.json({ ok: true, career: c });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
 
-    careerDatabase.forEach((career) => {
-      let score = 0;
+// UPDATE career
+router.put("/:id", async (req, res) => {
+  try {
+    await Career.updateOne({ _id: req.params.id }, { $set: req.body });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
 
-      // Skills match
-      career.skills.forEach((s) => {
-        if (skills.includes(s)) score += 2;
-      });
-
-      // Interests match
-      career.interests.forEach((i) => {
-        if (interests.includes(i)) score += 1;
-      });
-
-      // Work style match
-      if (career.workStyle === workStyle) score += 3;
-
-      // Save best career
-      if (score > bestScore) {
-        bestScore = score;
-        bestCareer = career.career;
-      }
-    });
-
-    return res.json({
-      recommendedCareer: bestCareer || "No strong match found",
-      score: bestScore
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      message: "Error generating recommendation",
-      error
-    });
+// DELETE career
+router.delete("/:id", async (req, res) => {
+  try {
+    await Career.deleteOne({ _id: req.params.id });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
   }
 });
 
