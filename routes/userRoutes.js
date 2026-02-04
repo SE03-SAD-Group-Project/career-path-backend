@@ -13,7 +13,7 @@ router.post("/register", async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: "User already exists" });
     
-    // Default to 'user' (employee) if no role provided
+    // Default to 'user' (employee/student) if no role provided
     const newUser = new User({ name, email, password, role: role || 'user' });
     await newUser.save();
     
@@ -47,10 +47,16 @@ router.post("/login", async (req, res) => {
 // 1. GET ALL CANDIDATES (For Employers to browse)
 router.get("/candidates", async (req, res) => {
   try {
-    // Find all users who are NOT admins or employers
-    const candidates = await User.find({ role: 'user' }).select('-password');
+    // --- THE FIX IS HERE ---
+    // Instead of looking for just 'user', we look for anyone who is NOT 'employer' or 'admin'.
+    // This captures 'user', 'student', or any other applicant role.
+    const candidates = await User.find({ 
+      role: { $nin: ['employer', 'admin'] } 
+    }).select('-password');
+    
     res.json({ ok: true, candidates });
   } catch (e) {
+    console.error("Error fetching candidates:", e);
     res.status(500).json({ ok: false, error: e.message });
   }
 });
