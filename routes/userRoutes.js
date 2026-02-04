@@ -138,5 +138,21 @@ router.get('/saved', async (req,res)=>{
   const user = await User.findById(userId).lean();
   res.json({ ok:true, saved: user?.saved||[] });
 });
+// --- ADMIN ROUTES ---
 
+// 5. GET ALL PENDING REQUESTS (For Admin Dashboard)
+router.get("/admin/pending-requests", async (req, res) => {
+  try {
+    // Find requests where status is exactly 'PENDING_ADMIN'
+    const requests = await Request.find({ status: 'PENDING_ADMIN' })
+      .populate('employerId', 'name email')  // Get Employer details
+      .populate('employeeId', 'name email'); // Get Student details
+      
+    res.json({ ok: true, requests });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// (Keep your existing module.exports at the bottom)
 module.exports = router;
