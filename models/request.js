@@ -13,13 +13,16 @@ const requestSchema = new mongoose.Schema({
   },
   status: { 
     type: String, 
-    enum: ['PENDING_ADMIN', 'PENDING_EMPLOYEE', 'ACCEPTED', 'DENIED', 'REJECTED_BY_ADMIN'], 
+    // This list defines every possible state of a job request
+    enum: [
+        'PENDING_ADMIN',       // 1. Employer sent it, waiting for Admin
+        'PENDING_EMPLOYEE',    // 2. Admin approved, waiting for Student
+        'ACCEPTED',            // 3. Student accepted (Connection made!)
+        'DENIED',              // 4. Student said no
+        'REJECTED_BY_ADMIN'    // 5. Admin blocked it (Spam/Safety)
+    ], 
     default: 'PENDING_ADMIN' 
-  },
-  createdAt: { 
-    type: Date, 
-    default: Date.now 
   }
-});
+}, { timestamps: true }); // ⭐ Professional Touch: Adds createdAt & updatedAt automatically
 
 module.exports = mongoose.model('Request', requestSchema);
